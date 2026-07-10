@@ -186,7 +186,7 @@ function chatRowHTML(c) {
 }
 
 function renderList() {
-  $('listtitle').textContent = location_ === 'inbox' ? 'Inbox' : 'Calls';
+  $('listtitle').textContent = location_ === 'calls' ? 'Calls' : (isViewFilter() ? filterMode : 'Inbox');
   renderPills();
   $chats.innerHTML = '';
 
@@ -243,8 +243,10 @@ function renderList() {
 
 // WA-style filter pill row under the header — no modal
 function renderPills() {
-  $pills.style.display = location_ === 'inbox' ? 'flex' : 'none';
-  if (location_ !== 'inbox') return;
+  // pills belong to the Inbox — a workspace view has its own scope, no filters
+  const show = location_ === 'inbox' && !isViewFilter();
+  $pills.style.display = show ? 'flex' : 'none';
+  if (!show) return;
   $pills.innerHTML = filterOptions().map((o, i) => `
     <button class="pillbtn ${filterMode === o.key ? 'active' : ''}" data-key="${o.key}">
       ${o.color ? `<span class="dot" style="background:${o.color}"></span>` : ''}${o.label}${o.count ? ` <span class="pcount">${o.count}</span>` : ''}
