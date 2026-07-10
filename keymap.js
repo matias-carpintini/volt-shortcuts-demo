@@ -32,6 +32,8 @@ const KEYMAP = {
     leader: 'g',
     inbox: 'i',           // g then i
     calls: 'c',           // g then c
+    views: 'v',           // g then v — view picker (workspace views)
+    archived: 'a',        // g then a — archived chats
     timeoutMs: 1200,      // all chords expire after this
   },
 
@@ -42,11 +44,6 @@ const KEYMAP = {
     group: 'g',           // c then g — new group
   },
 
-  // ---- "open" chord (Linear-style) ----
-  views: {
-    leader: 'o',
-    open: 'v',            // o then v — open a view (filter the chatlist)
-  },
 
   // ---- arrows / generic navigation (lists, palette, pickers) ----
   nav: {
@@ -85,6 +82,8 @@ const KEYMAP = {
     edit: 'e',            // own messages only (same letter as archive — different scope, no clash)
     info: 'i',            // delivery / read receipts
     delete: ['Backspace', 'Delete'],
+    // -- idea (experimental, may be removed) --
+    openAttachment: ' ',  // idea: Space — play audio message / open image
   },
 
 };

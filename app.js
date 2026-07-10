@@ -11,6 +11,7 @@ function is(e, binding) {
   return keys.some(k => {
     if (typeof k === 'object') {
       if (!!k.meta !== e.metaKey) return false;
+      if (!!k.shift !== e.shiftKey) return false;
       return e.key.toLowerCase() === k.key.toLowerCase();
     }
     if (e.metaKey || e.ctrlKey || e.altKey) return false;
@@ -24,7 +25,7 @@ const KEY_LABELS = {
 };
 function label(binding) {
   const k = Array.isArray(binding) ? binding[0] : binding;
-  if (typeof k === 'object') return (k.meta ? '⌘ ' : '') + (KEY_LABELS[k.key] || k.key.toUpperCase());
+  if (typeof k === 'object') return (k.meta ? '⌘' : '') + (k.shift ? '⇧' : '') + ' ' + (KEY_LABELS[k.key] || k.key.toUpperCase());
   return KEY_LABELS[k] || (k.length === 1 ? k.toUpperCase() : k);
 }
 function kbd(binding) { return `<kbd>${label(binding)}</kbd>`; }
@@ -79,6 +80,8 @@ const MESSAGES = {
     { author: null, text: 'Aprovecha a almorzar! 🍝', time: '13:19', out: true },
     { author: 'Julian Caruso', text: '+1', time: '13:20', out: false },
     { author: null, text: 'Salgo unos mins! 🏃', time: '12:39', out: true },
+    { author: 'Miguel Morkin', text: '', image: true, time: '13:21', out: false },
+    { author: null, text: '', audio: true, dur: '0:07', time: '13:22', out: true },
   ],
 };
 
@@ -109,15 +112,17 @@ let csOpen = false, csQuery = '', csSel = 0;   // in-chat search drawer
 let editOpen = false, editIdx = -1;            // edit-message modal
 let delOpen = false, delIdx = -1;              // delete-confirmation dialog
 let helpOpen = false;
+let imgOpen = false;          // image lightbox (Space on an image message)
+let recording = false;        // ⌘⇧A voice-note recording
 let chipMode = null;        // null | 'reply'
-let chordLeader = null, chordFromCompose = false, chordTimer = null;
+let chordLeader = null, chordTimer = null;
 
 const $ = id => document.getElementById(id);
 const $chats = $('chats'), $arch = $('archivedchats'), $pane = $('chatpane'),
       $toast = $('toast'), $bar = $('shortcutsbar'), $drawer = $('drawer'),
       $dim = $('dim'), $palette = $('palette'), $pinput = $('paletteinput'),
       $presults = $('paletteresults'), $lp = $('listpicker'), $lpitems = $('lpitems'),
-      $pills = $('filterpills'), $fwd = $('fwdmodal'), $views = $('viewsmodal'),
+      $pills = $('filterpills'), $fwd = $('fwdmodal'), $views = $('viewsmodal'), $lightbox = $('lightbox'),
       $create = $('createmodal'),
       $settings = $('settingsdrawer'), $help = $('helpmodal'), $edit = $('editmodal'), $del = $('deletemodal'),
       $sidenav = $('sidenav');
@@ -150,7 +155,7 @@ function visibleChats() {
 function hasArchRow() { return location_ === 'inbox' && filterMode === 'all'; }
 function isViewFilter() { return LISTS.some(l => l.name === filterMode); }
 function anyOverlay() {
-  return paletteOpen || lpOpen || !!createOpen || editOpen || delOpen || helpOpen || fwdOpen || viewsOpen;
+  return paletteOpen || lpOpen || !!createOpen || editOpen || delOpen || helpOpen || fwdOpen || viewsOpen || imgOpen;
 }
 
 // ---------------- Render: sidenav ----------------
@@ -166,7 +171,6 @@ function keyOf(binding) { return (Array.isArray(binding) ? binding[0] : binding)
 
 // ---------------- Render: middle column ----------------
 function chatRowHTML(c) {
-  const list = LISTS.find(l => l.name === c.list);
   return `
     <div class="avatar">${c.avatar}</div>
     <div class="chat-info">
@@ -175,7 +179,6 @@ function chatRowHTML(c) {
         <span class="chat-time">${c.time}</span>
       </div>
       <div class="chat-preview"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.preview}</span>
-        ${list ? `<span class="list-tag" style="border-color:${list.color}55;color:${list.color}">${list.name}</span>` : ''}
         ${c.plist ? `<span class="list-tag">${c.plist}</span>` : ''}
       </div>
     </div>
@@ -235,6 +238,7 @@ function renderList() {
     $chats.appendChild(el);
   });
   $chats.querySelector('.selected')?.scrollIntoView({ block: 'nearest' });
+  document.querySelector('.chatlist').scrollLeft = 0;
 }
 
 // WA-style filter pill row under the header — no modal
@@ -268,6 +272,8 @@ function renderDrawer() {
     $arch.appendChild(el);
   });
   $arch.querySelector('.selected')?.scrollIntoView({ block: 'nearest' });
+  // scrollIntoView during the slide-in can drag the whole column sideways
+  document.querySelector('.chatlist').scrollLeft = 0;
 }
 
 // ---------------- Render: chat pane ----------------
@@ -318,7 +324,9 @@ function renderPane() {
             ${(m.pinned || m.starred) ? `<div class="flags">${m.pinned ? '<span class="msy">keep</span>' : ''}${m.starred ? '<span class="msy">star</span>' : ''}</div>` : ''}
             ${m.author ? `<div class="author">${m.author}</div>` : ''}
             ${m.quote ? `<div class="quote">${m.quote}</div>` : ''}
-            <div class="body">${hl(m.text)}</div>
+            ${m.image ? '<div class="img-ph"><span class="msy">image</span></div>' : ''}
+            ${m.audio ? `<div class="audio-msg"><span class="msy">play_circle</span><span class="wave"></span><span class="adur">${m.dur || '0:07'}</span></div>` : ''}
+            ${m.text ? `<div class="body">${hl(m.text)}</div>` : ''}
             <div class="time">${m.forwarded ? '<span class="edited">forwarded</span> ' : ''}${m.edited ? '<span class="edited">edited</span> ' : ''}${m.time}${m.out ? ' <span class="msy ticks">done_all</span>' : ''}</div>
             ${m.reaction ? `<div class="reaction">${m.reaction}</div>` : ''}
             ${reactOpen && i === msgSel ? `
@@ -330,7 +338,7 @@ function renderPane() {
       <div class="composer">
         <div class="composer-box">
           <div class="reply-chip ${chipMode ? 'on' : ''}" id="replychip"></div>
-          <input id="compose" type="text" placeholder="Type a message" autocomplete="off">
+          <input id="compose" type="text" placeholder="${recording ? '● Recording audio…' : 'Type a message'}" class="${recording ? 'recording' : ''}" autocomplete="off">
         </div>
       </div>
     </div>
@@ -371,8 +379,8 @@ function renderPane() {
           <div class="dname">${chat.name}</div>
           <div class="dphone">${chat.phone || (chat.group ? 'group · 8 participants' : '')}</div>
           <div class="details-actions">
-            <div class="act"><div class="circ"><span class="msy">call</span></div>Voice</div>
-            <div class="act"><div class="circ"><span class="msy">videocam</span></div>Video</div>
+            <div class="act" onclick="startCall('voice')" style="cursor:pointer"><div class="circ"><span class="msy">call</span></div>Voice</div>
+            <div class="act" onclick="startCall('video')" style="cursor:pointer"><div class="circ"><span class="msy">videocam</span></div>Video</div>
             <div class="act"><div class="circ"><span class="msy">search</span></div>Search</div>
           </div>
         </div>
@@ -496,6 +504,13 @@ function renderOverlays() {
     $views.querySelector('.m-item.selected')?.scrollIntoView({ block: 'nearest' });
   }
 
+  // image lightbox (Space on an image message)
+  $lightbox.classList.toggle('on', imgOpen);
+  if (imgOpen) {
+    $lightbox.innerHTML = `
+      <div class="lb-body"><span class="msy">image</span><div class="lb-cap">Photo · Miguel Morkin · 13:21 (demo)</div></div>`;
+  }
+
   // forward message (WA-style: search + multi-select checkboxes)
   $fwd.classList.toggle('on', fwdOpen);
   if (fwdOpen) {
@@ -547,7 +562,8 @@ function renderOverlays() {
         [chord(GO.leader, GO.calls), 'Go to Calls'],
         [chord(CR.leader, CR.contact), 'New contact'],
         [chord(CR.leader, CR.group), 'New group'],
-        [chord(KEYMAP.views.leader, KEYMAP.views.open), 'Open view'],
+        [chord(GO.leader, GO.views), 'Go to views'],
+        [chord(GO.leader, GO.archived), 'Go to archived'],
         [kbd(G.settings), 'Settings'],
         [kbd(G.privacy), 'Privacy mode (blur)'],
         [kbd(G.help), 'This cheatsheet'],
@@ -576,6 +592,7 @@ function renderOverlays() {
         [kbd(M.star), 'Star'],
         [kbd(M.edit), 'Edit (own)'],
         [kbd(M.info), 'Message info'],
+        [kbd(M.openAttachment), 'Play audio / open image'],
         [kbd(M.delete), 'Delete'],
       ]],
     ];
@@ -615,13 +632,11 @@ function renderOverlays() {
 function renderBar() {
   const N = KEYMAP.nav, C = KEYMAP.chatlist, M = KEYMAP.message, CH = KEYMAP.chat, G = KEYMAP.global;
   if (chordLeader) {
-    const GO = KEYMAP.goto, CR = KEYMAP.create, V = KEYMAP.views;
+    const GO = KEYMAP.goto, CR = KEYMAP.create;
     if (chordLeader === keyOf(GO.leader))
-      $bar.innerHTML = `<span>${kbd(GO.leader)} then…</span><span>${kbd(GO.inbox)} inbox</span><span>${kbd(GO.calls)} calls</span><span>${kbd(G.back)} cancel</span>`;
-    else if (chordLeader === keyOf(CR.leader))
-      $bar.innerHTML = `<span>${kbd(CR.leader)} then…</span><span>${kbd(CR.contact)} new contact</span><span>${kbd(CR.group)} new group</span><span>${kbd(G.back)} cancel</span>`;
+      $bar.innerHTML = `<span>${kbd(GO.leader)} then…</span><span>${kbd(GO.inbox)} inbox</span><span>${kbd(GO.calls)} calls</span><span>${kbd(GO.views)} views</span><span>${kbd(GO.archived)} archived</span><span>${kbd(G.back)} cancel</span>`;
     else
-      $bar.innerHTML = `<span>${kbd(V.leader)} then…</span><span>${kbd(V.open)} open view</span><span>${kbd(G.back)} cancel</span>`;
+      $bar.innerHTML = `<span>${kbd(CR.leader)} then…</span><span>${kbd(CR.contact)} new contact</span><span>${kbd(CR.group)} new group</span><span>${kbd(G.back)} cancel</span>`;
     return;
   }
   if (delOpen) {
@@ -642,12 +657,14 @@ function renderBar() {
     $bar.innerHTML = `<span>${kbd(N.left)}${kbd(N.right)} pick</span><span>${kbd(N.confirm)} react</span><span>${kbd(G.back)} cancel</span>`;
   } else if (csOpen) {
     $bar.innerHTML = `<span>${kbd(N.up)}${kbd(N.down)} results</span><span>${kbd(N.confirm)} open message</span><span>${kbd(G.back)} close search</span>`;
+  } else if (view === 'chat' && recording) {
+    $bar.innerHTML = `<span style="color:#e05252">● recording</span><span>${kbd(CH.send)} send</span><span>${kbd(G.back)} cancel</span>`;
   } else if (view === 'chat' && msgSel >= 0) {
     $bar.innerHTML = `<span>${kbd(M.reply)} reply</span><span>${kbd(M.copy)} copy</span>
       <span>${kbd(M.forward)} fwd</span><span>${kbd(M.react)} react</span>
       <span>${kbd(M.pin)} pin</span><span>${kbd(M.star)} star</span>
       <span>${kbd(M.edit)} edit</span><span>${kbd(M.info)} info</span>
-      <span>${kbd(M.delete)} del</span><span>${kbd(G.back)} back</span>`;
+      <span>${kbd(M.openAttachment)} open</span><span>${kbd(M.delete)} del</span><span>${kbd(G.back)} back</span>`;
   } else if (view === 'chat') {
     $bar.innerHTML = `<span>${kbd(CH.browseMessages)} browse msgs</span><span>${kbd(CH.send)} send</span>
       <span>${kbd(CH.sendAndArchive)} send+archive</span>
@@ -665,7 +682,7 @@ function renderBar() {
       <span>${kbd(C.archive)} archive</span><span>${kbd(C.markUnread)} unread</span>
       <span>${kbd(C.changeList)} list</span>
       <span>${kbd(G.search)} search</span>
-      <span>${kbd(KEYMAP.goto.leader)}·${label(KEYMAP.create.leader)}·${label(KEYMAP.views.leader)} chords</span><span>${kbd(G.help)} help</span>`;
+      <span>${kbd(KEYMAP.goto.leader)} go to</span><span>${kbd(KEYMAP.create.leader)} create</span><span>${kbd(G.help)} help</span>`;
   }
 }
 
@@ -801,6 +818,13 @@ function openView(key) {
   toast(`view: <b>${viewOptions().find(o => o.key === key)?.label}</b>`);
 }
 function closeViews() { viewsOpen = false; renderOverlays(); renderBar(); refocus(); }
+function openArchivedSection() {
+  openId = null; view = 'list'; msgSel = -1;
+  detailsOpen = false; csOpen = false; infoOpen = false;
+  location_ = 'inbox'; filterMode = 'all'; sel = 0;
+  drawerOpen = true; drawerSel = 0;
+  renderAll();
+}
 
 // ----- Palette -----
 function paletteData() {
@@ -1040,6 +1064,38 @@ function sendMsg() {
   if (c) c.value = '';
 }
 
+function startCall(kind, chat) {
+  chat = chat || findChat(openId);
+  if (!chat) return;
+  toast(`<span class="msy" style="color:var(--accent)">${kind === 'video' ? 'videocam' : 'call'}</span> ${kind} calling <b>${chat.name}</b>… (demo)`);
+}
+
+function startRecording() {
+  const chat = findChat(openId);
+  if (!chat || recording) return;
+  recording = true;
+  toastKey(KEYMAP.chat.recordAudio, `recording… ${label(KEYMAP.chat.send)} to send, ${label(KEYMAP.global.back)} to cancel`);
+  renderPane(); renderBar();
+}
+function stopRecording(send) {
+  recording = false;
+  if (send) {
+    msgsOf().push({ author: null, text: '', audio: true, dur: '0:07', time: 'now', out: true });
+    toastKey(KEYMAP.chat.send, 'voice message sent');
+  } else {
+    toastKey(KEYMAP.global.back, 'recording discarded');
+  }
+  renderPane(); renderBar();
+}
+
+function openAttachment() {
+  const m = msgsOf()[msgSel];
+  if (!m) return;
+  if (m.image) { imgOpen = true; renderOverlays(); renderBar(); }
+  else if (m.audio) toastKey(KEYMAP.message.openAttachment, '▶ playing voice message… (demo)');
+  else toastKey(KEYMAP.message.openAttachment, 'no attachment on this message');
+}
+
 function sendAndArchive() {
   const input = $('compose');
   if (!input || !input.value.trim()) return;
@@ -1069,39 +1125,32 @@ function goTo(dest) {
 
 // ---------------- Chords ----------------
 function chordActionsFor(leaderKey) {
-  const G = KEYMAP.goto, C = KEYMAP.create, V = KEYMAP.views;
-  if (leaderKey === keyOf(G.leader)) return { [keyOf(G.inbox)]: () => goTo('inbox'), [keyOf(G.calls)]: () => goTo('calls') };
+  const G = KEYMAP.goto, C = KEYMAP.create;
+  if (leaderKey === keyOf(G.leader)) return {
+    [keyOf(G.inbox)]: () => goTo('inbox'),
+    [keyOf(G.calls)]: () => goTo('calls'),
+    [keyOf(G.views)]: openViewsPicker,
+    [keyOf(G.archived)]: openArchivedSection,
+  };
   if (leaderKey === keyOf(C.leader)) return { [keyOf(C.contact)]: openCreateContact, [keyOf(C.group)]: openCreateGroup };
-  if (leaderKey === keyOf(V.leader)) return { [keyOf(V.open)]: openViewsPicker };
   return null;
 }
 function leaderKeyOf(e) {
-  const leaders = [KEYMAP.goto.leader, KEYMAP.create.leader, KEYMAP.views.leader];
+  const leaders = [KEYMAP.goto.leader, KEYMAP.create.leader];
   const hit = leaders.find(l => is(e, l));
   return hit ? keyOf(hit) : null;
 }
-function startChord(leaderKey, fromCompose) {
+function startChord(leaderKey) {
   chordLeader = leaderKey;
-  chordFromCompose = fromCompose;
   renderBar();
   clearTimeout(chordTimer);
-  chordTimer = setTimeout(() => {
-    // chord expired: if it swallowed a letter meant for the composer, type it
-    if (chordFromCompose) typeIntoCompose(chordLeader);
-    chordLeader = null;
-    renderBar();
-  }, KEYMAP.goto.timeoutMs);
+  chordTimer = setTimeout(() => { chordLeader = null; renderBar(); }, KEYMAP.goto.timeoutMs);
 }
 function clearChord() {
   clearTimeout(chordTimer);
   chordLeader = null;
   renderBar();
 }
-function typeIntoCompose(ch) {
-  const el = $('compose');
-  if (el) { el.value += ch; el.focus(); }
-}
-
 // ---------------- Keyboard ----------------
 document.addEventListener('keydown', (e) => {
   const N = KEYMAP.nav, C = KEYMAP.chatlist, M = KEYMAP.message, CH = KEYMAP.chat, G = KEYMAP.global;
@@ -1138,6 +1187,15 @@ document.addEventListener('keydown', (e) => {
     if (is(e, N.up)) { e.preventDefault(); fwdSel = Math.max(fwdSel - 1, 0); renderOverlays(); return; }
     if (is(e, N.confirm)) { e.preventDefault(); if (cands[fwdSel]) toggleFwd(cands[fwdSel].id); return; }
     return; // typing lands in the search input
+  }
+
+  // ---- image lightbox: any dismiss key closes ----
+  if (imgOpen) {
+    if (is(e, G.back) || is(e, N.confirm) || is(e, KEYMAP.message.openAttachment)) {
+      imgOpen = false; renderOverlays(); renderBar();
+    }
+    e.preventDefault();
+    return;
   }
 
   // ---- meta shortcuts, work everywhere ----
@@ -1197,13 +1255,9 @@ document.addEventListener('keydown', (e) => {
     if (is(e, G.back)) { e.preventDefault(); clearChord(); return; } // cancel chord, swallow nothing
     const actions = chordActionsFor(chordLeader);
     const act = actions && actions[e.key.toLowerCase()];
-    const fromCompose = chordFromCompose;
-    const leader = chordLeader;
     clearChord();
     if (act) { e.preventDefault(); act(); return; }
-    // no match: if the leader was swallowed from an empty composer, type it back,
-    // then let this key be handled normally below
-    if (fromCompose) typeIntoCompose(leader);
+    // no match: fall through to normal handling
   }
 
   // ---- in-chat search drawer: arrows walk results, Enter opens message + closes ----
@@ -1230,9 +1284,13 @@ document.addEventListener('keydown', (e) => {
 
   // ------- CHAT MODE -------
   if (view === 'chat') {
+    if (recording) {
+      e.preventDefault();
+      if (is(e, CH.send)) stopRecording(true);
+      else if (is(e, G.back)) stopRecording(false);
+      return;
+    }
     const msgs = msgsOf();
-    const composeEl = $('compose');
-    const composeEmpty = !composeEl || composeEl.value === '';
 
     if (is(e, G.back)) {
       e.preventDefault();
@@ -1272,25 +1330,22 @@ document.addEventListener('keydown', (e) => {
       if (is(e, M.star)) { e.preventDefault(); starMsg(); return; }
       if (is(e, M.edit)) { e.preventDefault(); editMsg(); return; }
       if (is(e, M.info)) { e.preventDefault(); msgInfo(); return; }
+      if (is(e, M.openAttachment)) { e.preventDefault(); openAttachment(); return; }
       if (is(e, M.delete)) { e.preventDefault(); deleteMsg(); return; }
       const lk = leaderKeyOf(e);
-      if (lk) { e.preventDefault(); startChord(lk, false); return; }
+      if (lk) { e.preventDefault(); startChord(lk); return; }
       if (e.key.length === 1) e.preventDefault(); // swallow: composer is blurred while browsing
       return;
     }
 
-    // composing: chord leaders only fire from an EMPTY composer
-    if (composeEmpty) {
-      const lk = leaderKeyOf(e);
-      if (lk) { e.preventDefault(); startChord(lk, true); return; }
-    }
+    // composing: the composer owns every letter — no chords while typing
     if (is(e, CH.send)) { e.preventDefault(); sendMsg(); }
     return;
   }
 
   // ------- LIST MODE -------
   const lk = leaderKeyOf(e);
-  if (lk) { e.preventDefault(); startChord(lk, false); return; }
+  if (lk) { e.preventDefault(); startChord(lk); return; }
 
   if (is(e, G.back)) {
     if (drawerOpen) { e.preventDefault(); closeDrawer(); }

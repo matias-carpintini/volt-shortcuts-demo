@@ -23,9 +23,8 @@ Everything lives in **`keymap.js`**. Edit a value, reload. The shortcut bar, sid
 | Anywhere | `⌘ /` | Shortcuts cheatsheet |
 | Anywhere | `⌘ ,` | Settings |
 | Anywhere | `⌘ .` | Privacy mode (blur chats, WA-style) |
-| Anywhere | `g` → `i` / `c` | Go to Inbox / Calls |
+| Anywhere | `g` → `i` / `c` / `v` / `a` | Go to Inbox / Calls / Views picker / Archived |
 | Anywhere | `c` → `c` / `g` | Create contact / group |
-| Anywhere | `o` → `v` | Open workspace view (Linear-style picker) |
 | Anywhere | `Esc` | Pops the top layer, one at a time |
 | Chatlist | `↑` `↓` | Move virtual focus |
 | Chatlist | `Enter` | Open chat / Archived drawer |
@@ -37,6 +36,7 @@ Everything lives in **`keymap.js`**. Edit a value, reload. The shortcut bar, sid
 | Chat open | `]` | Toggle contact info panel |
 | Chat open | `Enter` | Send |
 | Chat open | `⌘ Enter` | Send and archive the conversation |
+| Focused message | `Space` | Play voice message / open image *(idea)* |
 | Focused message | `Enter` | Reply (quote) |
 | Focused message | `C` | Copy |
 | Focused message | `F` | Forward — modal, `Enter` selects chats, `⌘ Enter` sends |
@@ -52,7 +52,7 @@ Filter pills under the chatlist header are **private lists** (All / Unread / Fam
 Notes on collisions:
 - `E` = archive in the chatlist, edit on a focused message. Different scopes, no clash.
 - `C`/`F` on a focused message = copy/forward; the `c` create-chord and `f` filter only fire where those letters are free.
-- Chord leaders (`g`, `c`, `o`) also work from an **empty** composer — if the second key doesn't match or the chord times out, the swallowed letter is typed into the composer instead.
+- Chord leaders (`g`, `c`) never fire from the composer — typing is always free. Use them from the chatlist or a focused message.
 - While a message is focused the composer is blurred — unbound letters do nothing. `Esc` returns focus to the composer to type.
 
 ## Files

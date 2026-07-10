@@ -626,3 +626,27 @@ body.privacy .chat.archived-row .avatar, body.privacy .chat.archived-row .chat-n
 .m-title .msy { font-size: 18px; color: var(--text-dim); }
 
 .nav-item[data-view] { cursor: pointer; }
+
+/* ---------- Attachments (ideas) ---------- */
+.img-ph {
+  width: 200px; height: 130px; border-radius: 8px;
+  background: var(--panel-2); border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+}
+.img-ph .msy { font-size: 34px; color: var(--text-dim); }
+.audio-msg { display: flex; align-items: center; gap: 8px; min-width: 170px; }
+.audio-msg .msy { font-size: 26px; color: var(--accent); }
+.audio-msg .wave {
+  flex: 1; height: 14px; border-radius: 3px;
+  background: repeating-linear-gradient(90deg, var(--text-dim) 0 2px, transparent 2px 5px);
+  opacity: .55;
+}
+.audio-msg .adur { font-size: 11px; color: var(--text-dim); }
+.composer input.recording { border-color: #e05252; }
+.composer input.recording::placeholder { color: #e05252; }
+
+/* Image lightbox */
+.modal.lightbox { width: 560px; top: 16vh; background: var(--bg); }
+.lb-body { padding: 60px 20px; text-align: center; }
+.lb-body .msy { font-size: 90px; color: var(--text-dim); }
+.lb-cap { margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }
