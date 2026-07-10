@@ -1,0 +1,90 @@
+// ============================================================
+// KEYMAP — edit this file to change any shortcut.
+//
+// Values are KeyboardEvent.key strings:
+//   single letters ('e', 'c', …) are case-insensitive
+//   named keys: 'Enter', 'Escape', 'ArrowUp', 'Backspace', ']', '/'
+//   an action can take several keys: delete: ['Backspace', 'Delete']
+//   modifier combos are objects: { key: ',', meta: true }  →  ⌘ ,
+//
+// Chord leaders (goto/create/groupActions) fire when you're NOT
+// typing: in the chatlist, on a focused message, or in an EMPTY
+// composer. If the second key doesn't match (or the chord times
+// out) while in the composer, the leader letter is typed normally.
+//
+// The shortcut bar at the bottom re-labels itself from this file.
+// ============================================================
+
+const KEYMAP = {
+
+  // ---- everywhere ----
+  global: {
+    search: { key: 'k', meta: true },   // ⌘ K — command palette, works everywhere (even while typing)
+    back: 'Escape',                     // pops the top layer, one at a time
+    settings: { key: ',', meta: true }, // ⌘ ,
+    privacy: { key: '.', meta: true },  // ⌘ .  blur chats (WA privacy feature)
+    submit: { key: 'Enter', meta: true }, // ⌘ Enter — confirm dialogs (save edit, confirm delete)
+    help: { key: '/', meta: true },     // ⌘ /  cheatsheet of all shortcuts
+  },
+
+  // ---- "go to" chord ----
+  goto: {
+    leader: 'g',
+    inbox: 'i',           // g then i
+    calls: 'c',           // g then c
+    timeoutMs: 1200,      // all chords expire after this
+  },
+
+  // ---- "create" chord ----
+  create: {
+    leader: 'c',
+    contact: 'c',         // c then c — new contact
+    group: 'g',           // c then g — new group
+  },
+
+  // ---- "open" chord (Linear-style) ----
+  views: {
+    leader: 'o',
+    open: 'v',            // o then v — open a view (filter the chatlist)
+  },
+
+  // ---- arrows / generic navigation (lists, palette, pickers) ----
+  nav: {
+    up: 'ArrowUp',
+    down: 'ArrowDown',
+    left: 'ArrowLeft',
+    right: 'ArrowRight',
+    confirm: 'Enter',
+  },
+
+  // ---- chatlist (and archived drawer) ----
+  chatlist: {
+    open: 'Enter',        // open focused chat / archived drawer
+    archive: 'e',         // archive (inbox) / unarchive (drawer)
+    markUnread: 'u',      // toggle unread badge
+    changeList: 'l',      // open list picker
+  },
+
+  // ---- open chat, composing ----
+  chat: {
+    send: 'Enter',
+    sendAndArchive: { key: 'Enter', meta: true }, // ⌘ Enter — send and archive the conversation
+    details: ']',                             // toggle contact info panel
+    browseMessages: 'ArrowUp',                // start navigating messages from composer
+    searchMessages: { key: 'f', meta: true }, // ⌘ f — search within the open chat
+  },
+
+  // ---- virtually-focused message ----
+  message: {
+    reply: 'Enter',
+    copy: 'c',
+    forward: 'f',
+    react: 'r',
+    pin: 'p',
+    star: 's',
+    edit: 'e',            // own messages only (same letter as archive — different scope, no clash)
+    info: 'i',            // delivery / read receipts
+    delete: ['Backspace', 'Delete'],
+  },
+
+};
