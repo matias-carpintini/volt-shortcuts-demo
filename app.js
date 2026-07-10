@@ -300,10 +300,13 @@ function hl(text) {
   return text.replace(re, s => `<mark>${s}</mark>`);
 }
 
+let paneChatId = null; // which chat the pane last rendered — scroll survives same-chat re-renders
 function renderPane() {
   const draft = $('compose')?.value ?? '';
+  const prevScroll = openId === paneChatId ? $('messages')?.scrollTop : null;
   const chat = findChat(openId);
   if (!chat) {
+    paneChatId = null;
     $pane.className = 'chatpane empty';
     $pane.innerHTML = `<img class="big-symbol" src="assets/Symbol-1.svg" alt=""><div>Select a chat and hit <b>${label(KEYMAP.chatlist.open)}</b></div>`;
     return;
@@ -404,10 +407,11 @@ function renderPane() {
     </aside>`;
 
   const $msgs = $('messages');
+  paneChatId = openId;
+  // restore scroll (innerHTML reset it to 0); fresh chat starts at the bottom
+  $msgs.scrollTop = prevScroll != null ? prevScroll : $msgs.scrollHeight;
   if (msgSel >= 0) {
-    $msgs.querySelector('.msg.selected')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  } else {
-    $msgs.scrollTop = $msgs.scrollHeight;
+    $msgs.querySelector('.msg.selected')?.scrollIntoView({ block: 'nearest' });
   }
 
   if (infoOpen) {
@@ -1064,6 +1068,8 @@ function sendMsg() {
   renderPane(); renderBar();
   const c = $('compose');
   if (c) c.value = '';
+  const m = $('messages');
+  if (m) m.scrollTop = m.scrollHeight;
 }
 
 function startCall(kind, chat) {
@@ -1088,6 +1094,8 @@ function stopRecording(send) {
     toastKey(KEYMAP.global.back, 'recording discarded');
   }
   renderPane(); renderBar();
+  const m = $('messages');
+  if (m) m.scrollTop = m.scrollHeight;
 }
 
 function openAttachment() {
