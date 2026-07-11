@@ -66,7 +66,7 @@ const KEYMAP = {
   chat: {
     send: 'Enter',
     sendAndArchive: { key: 'Enter', meta: true }, // ⌘ Enter — send and archive the conversation
-    details: ']',                             // toggle contact info panel
+    details: ']',                             // toggle contact info (from a focused message — printable, so never while typing)
     browseMessages: 'ArrowUp',                // start navigating messages from composer
     searchMessages: { key: 'f', meta: true }, // ⌘ f — search within the open chat
   },
@@ -74,7 +74,7 @@ const KEYMAP = {
   // ---- virtually-focused message ----
   message: {
     reply: 'Enter',
-    copy: 'c',
+    copy: 'y',            // y — copy (yank); 'c' stays free for the create chord
     forward: 'f',
     react: 'r',
     pin: 'p',

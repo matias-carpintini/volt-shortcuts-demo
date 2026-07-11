@@ -670,11 +670,11 @@ function renderBar() {
       <span>${kbd(M.forward)} fwd</span><span>${kbd(M.react)} react</span>
       <span>${kbd(M.pin)} pin</span><span>${kbd(M.star)} star</span>
       <span>${kbd(M.edit)} edit</span><span>${kbd(M.info)} info</span>
-      <span>${kbd(M.openAttachment)} open</span><span>${kbd(M.delete)} del</span><span>${kbd(G.back)} back</span>`;
+      <span>${kbd(M.openAttachment)} open</span><span>${kbd(CH.details)} details</span><span>${kbd(M.delete)} del</span><span>${kbd(G.back)} back</span>`;
   } else if (view === 'chat') {
     $bar.innerHTML = `<span>${kbd(CH.browseMessages)} browse msgs</span><span>${kbd(CH.send)} send</span>
       <span>${kbd(CH.sendAndArchive)} send+archive</span>
-      <span>${kbd(CH.searchMessages)} search</span><span>${kbd(CH.details)} details</span>
+      <span>${kbd(CH.searchMessages)} search</span>
       <span>${kbd(G.back)} close</span>`;
   } else if (location_ === 'calls') {
     $bar.innerHTML = `<span>${kbd(N.up)}${kbd(N.down)} calls</span>
@@ -1314,8 +1314,6 @@ document.addEventListener('keydown', (e) => {
       else closeChat();                                                  // 5: close chat
       return;
     }
-    if (is(e, CH.details)) { e.preventDefault(); detailsOpen = !detailsOpen; renderPane(); renderBar(); return; }
-
     if (is(e, msgSel === -1 ? CH.browseMessages : N.up)) {
       e.preventDefault();
       msgSel = msgSel === -1 ? msgs.length - 1 : Math.max(msgSel - 1, 0);
@@ -1342,6 +1340,7 @@ document.addEventListener('keydown', (e) => {
       if (is(e, M.info)) { e.preventDefault(); msgInfo(); return; }
       if (is(e, M.openAttachment)) { e.preventDefault(); openAttachment(); return; }
       if (is(e, M.delete)) { e.preventDefault(); deleteMsg(); return; }
+      if (is(e, CH.details)) { e.preventDefault(); detailsOpen = !detailsOpen; infoOpen = false; renderPane(); renderBar(); return; }
       const lk = leaderKeyOf(e);
       if (lk) { e.preventDefault(); startChord(lk); return; }
       if (e.key.length === 1) e.preventDefault(); // swallow: composer is blurred while browsing
