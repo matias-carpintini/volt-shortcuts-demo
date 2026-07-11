@@ -33,7 +33,7 @@ const KEYMAP = {
     inbox: 'i',           // g then i
     calls: 'c',           // g then c
     views: 'v',           // g then v — view picker (workspace views)
-    archived: 'a',        // g then a — archived chats
+    archived: 'e',        // g then e — archived chats (pairs with E = archive)
     timeoutMs: 1200,      // all chords expire after this
   },
 
@@ -76,7 +76,7 @@ const KEYMAP = {
   // ---- virtually-focused message ----
   message: {
     reply: 'Enter',
-    copy: 'y',            // y — copy (yank); 'c' stays free for the create chord
+    copy: { key: 'c', meta: true }, // ⌘ C — copy focused message (Slack convention); bare 'c' stays the create chord
     forward: 'f',
     react: 'r',
     pin: 'p',

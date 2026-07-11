@@ -1216,6 +1216,7 @@ document.addEventListener('keydown', (e) => {
   if (is(e, G.settings)) { e.preventDefault(); toggleSettings(); return; }
   if (is(e, G.privacy)) { e.preventDefault(); togglePrivacy(); return; }
   if (is(e, CH.sendAndArchive) && view === 'chat' && !anyOverlay() && !csOpen && msgSel === -1) { e.preventDefault(); sendAndArchive(); return; }
+  if (is(e, M.copy) && view === 'chat' && msgSel >= 0 && !anyOverlay()) { e.preventDefault(); copyMsg(); return; }
   if (is(e, CH.searchMessages) && view === 'chat' && !settingsOpen) { e.preventDefault(); openChatSearch(); return; }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
 
@@ -1334,7 +1335,6 @@ document.addEventListener('keydown', (e) => {
     if (msgSel >= 0) {
       // single-letter shortcuts win over chord leaders here (C = copy, not create)
       if (is(e, M.reply)) { e.preventDefault(); replyMsg(); return; }
-      if (is(e, M.copy)) { e.preventDefault(); copyMsg(); return; }
       if (is(e, M.forward)) { e.preventDefault(); forwardMsg(); return; }
       if (is(e, M.react)) { e.preventDefault(); reactOpen = true; reactSel = 1; renderPane(); renderBar(); return; }
       if (is(e, M.pin)) { e.preventDefault(); pinMsg(); return; }

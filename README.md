@@ -36,7 +36,7 @@ The one hard rule: **while the caret is in an input, every printable key belongs
 
 ### Trade-offs we accepted
 
-- **Same letter, two scopes, both conventional**: `E` archives in the chatlist (Gmail/Superhuman) and edits on a focused message (Slack). The scopes never overlap, and the bottom bar shows which meaning is live. `Y` copy is a conscious deviation — vim's yank, and a harmless key to misfire.
+- **Same letter, two scopes, both conventional**: `E` archives in the chatlist (Gmail/Superhuman) and edits on a focused message (Slack). The scopes never overlap, and the bottom bar shows which meaning is live. Copy is `⌘C`, exactly like Slack: no selection → the focused message; selection → the browser's copy.
 - **Chords don't fire while composing.** We tried firing chord leaders from an empty composer with a "type the letter back on mismatch" fallback — it worked, but any chord whose second key is a vowel misfires on real words ("**ca**sa" would open the contact modal). Typing freedom won.
 - **Modifier combos are reserved for cross-mode actions** (`⌘Enter` submit, `⌘K` palette). Single letters are the default everywhere else; where no simple key existed that didn't fight typing (start call, record audio), we shipped *no* shortcut rather than a heavy one.
 - **Blurring the composer while browsing messages** means an unbound letter does nothing at all, instead of "helpfully" landing in the draft. Doing nothing turned out to be less surprising than teleporting the keystroke.
@@ -67,7 +67,7 @@ The same grammar covers transient states: `Esc` cancels a pending chord, discard
 
 Every place in the app is reachable directly, from anywhere:
 
-- `g i` Inbox · `g c` Calls · `g v` views picker · `g a` Archived — from the chatlist, from a focused message, mid-conversation. No clicking around first.
+- `g i` Inbox · `g c` Calls · `g v` views picker · `g e` Archived — from the chatlist, from a focused message, mid-conversation. No clicking around first.
 - `⌘K` command palette — searches every chat (including archived), `Enter` jumps straight in. Works even while typing, because it's a modifier combo.
 - **Workspace views** (Backlog, Mid Market, Enterprise, SMB — shared, Linear-style) open via `g v` or a sidenav click. The chatlist header takes the view's name and the Inbox filter pills disappear: different scope, different chrome.
 - **Private lists** (Family, Friends… — yours only, WA-style) are the filter pills under the Inbox header (click-only) and the `L` picker.
@@ -87,11 +87,11 @@ Everything below lives in **`keymap.js`** — edit a value, reload, and the bar 
 | `⌘ /` | Shortcuts cheatsheet |
 | `⌘ ,` | Settings (left drawer over the chatlist) |
 | `⌘ .` | Privacy mode — blurs avatars, names, previews, messages (WA-style) |
-| `g` → `i` / `c` / `v` / `a` | Go to Inbox / Calls / Views picker / Archived |
+| `g` → `i` / `c` / `v` / `e` | Go to Inbox / Calls / Views picker / Archived (`e`, pairing with `E` = archive) |
 | `c` → `c` / `g` | Create contact / group |
 | `Esc` | Pop the top layer (see above) |
 
-Chord leaders (`g`, `c`) fire from the chatlist or a focused message — never from an input. Copy is `Y` (yank), which keeps bare `c` free for the create chord everywhere outside the composer. A pending chord shows its options in the bottom bar; `Esc` cancels it.
+Chord leaders (`g`, `c`) fire from the chatlist or a focused message — never from an input. Copy is `⌘C` (Slack's convention for a focused message), which keeps bare `c` free for the create chord everywhere outside the composer. A pending chord shows its options in the bottom bar; `Esc` cancels it.
 
 ### Chatlist (and archived drawer)
 
@@ -123,7 +123,7 @@ The composer is blurred here; every key acts on the highlighted bubble.
 |---|---|
 | `↑` `↓` / `j` `k` | Older / newer (`↓`/`j` past the newest returns to the composer) |
 | `Enter` | Reply — quote chip in the composer |
-| `Y` | Copy message text (yank — misfiring is harmless, unlike Gmail's `y`) |
+| `⌘ C` | Copy message text (Slack convention — no text selected, so it takes the focused message) |
 | `F` | Forward — WA modal: search, `Enter` multi-select, `⌘ Enter` send |
 | `R` | React — emoji bar, `←` `→` + `Enter` |
 | `P` / `S` | Pin / star (flags shown on the bubble) |
