@@ -36,7 +36,7 @@ The one hard rule: **while the caret is in an input, every printable key belongs
 
 ### Trade-offs we accepted
 
-- **Same letter, different meaning per mode** (`E` = archive in chatlist, edit on a message). Scoping kills the collisions and the bottom bar always shows what's live, but a key's meaning isn't global.
+- **Same letter, two scopes, both conventional**: `E` archives in the chatlist (Gmail/Superhuman) and edits on a focused message (Slack). The scopes never overlap, and the bottom bar shows which meaning is live. `Y` copy is a conscious deviation — vim's yank, and a harmless key to misfire.
 - **Chords don't fire while composing.** We tried firing chord leaders from an empty composer with a "type the letter back on mismatch" fallback — it worked, but any chord whose second key is a vowel misfires on real words ("**ca**sa" would open the contact modal). Typing freedom won.
 - **Modifier combos are reserved for cross-mode actions** (`⌘Enter` submit, `⌘K` palette). Single letters are the default everywhere else; where no simple key existed that didn't fight typing (start call, record audio), we shipped *no* shortcut rather than a heavy one.
 - **Blurring the composer while browsing messages** means an unbound letter does nothing at all, instead of "helpfully" landing in the draft. Doing nothing turned out to be less surprising than teleporting the keystroke.
@@ -97,9 +97,9 @@ Chord leaders (`g`, `c`) fire from the chatlist or a focused message — never f
 
 | Key | Action |
 |---|---|
-| `↑` `↓` | Move the virtual focus |
+| `↑` `↓` / `j` `k` | Move the virtual focus |
 | `Enter` | Open chat (or the Archived drawer on its row) |
-| `E` | Archive — unarchive inside the drawer |
+| `E` | Archive — unarchive inside the drawer (Gmail/Superhuman convention) |
 | `U` | Toggle unread |
 | `L` | Move chat to a private list (Family, Friends…) |
 | `Esc` | Close drawer / clear active filter |
@@ -121,9 +121,9 @@ The composer is blurred here; every key acts on the highlighted bubble.
 
 | Key | Action |
 |---|---|
-| `↑` `↓` | Older / newer (`↓` past the newest returns to the composer) |
+| `↑` `↓` / `j` `k` | Older / newer (`↓`/`j` past the newest returns to the composer) |
 | `Enter` | Reply — quote chip in the composer |
-| `Y` | Copy message text (yank) |
+| `Y` | Copy message text (yank — misfiring is harmless, unlike Gmail's `y`) |
 | `F` | Forward — WA modal: search, `Enter` multi-select, `⌘ Enter` send |
 | `R` | React — emoji bar, `←` `→` + `Enter` |
 | `P` / `S` | Pin / star (flags shown on the bubble) |

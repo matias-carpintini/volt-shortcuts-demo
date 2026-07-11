@@ -29,6 +29,9 @@ function label(binding) {
   return KEY_LABELS[k] || (k.length === 1 ? k.toUpperCase() : k);
 }
 function kbd(binding) { return `<kbd>${label(binding)}</kbd>`; }
+// arrows + j/k, for contexts where letters are free (never inputs)
+function navUp(e) { return is(e, KEYMAP.nav.up) || is(e, KEYMAP.nav.vimUp); }
+function navDown(e) { return is(e, KEYMAP.nav.down) || is(e, KEYMAP.nav.vimDown); }
 
 // ---------------- Data ----------------
 // Workspace views (shared, Linear-style)
@@ -1237,16 +1240,16 @@ document.addEventListener('keydown', (e) => {
   if (viewsOpen) {
     const n = viewOptions().length;
     if (is(e, G.back)) closeViews();
-    else if (is(e, N.down)) { viewsSel = Math.min(viewsSel + 1, n - 1); renderOverlays(); }
-    else if (is(e, N.up)) { viewsSel = Math.max(viewsSel - 1, 0); renderOverlays(); }
+    else if (navDown(e)) { viewsSel = Math.min(viewsSel + 1, n - 1); renderOverlays(); }
+    else if (navUp(e)) { viewsSel = Math.max(viewsSel - 1, 0); renderOverlays(); }
     else if (is(e, N.confirm)) openView(viewOptions()[viewsSel].key);
     e.preventDefault();
     return;
   }
   if (lpOpen) {
     if (is(e, G.back)) { lpOpen = false; renderOverlays(); renderBar(); }
-    else if (is(e, N.down)) { lpSel = Math.min(lpSel + 1, PLISTS.length - 1); renderLp(); }
-    else if (is(e, N.up)) { lpSel = Math.max(lpSel - 1, 0); renderLp(); }
+    else if (navDown(e)) { lpSel = Math.min(lpSel + 1, PLISTS.length - 1); renderLp(); }
+    else if (navUp(e)) { lpSel = Math.max(lpSel - 1, 0); renderLp(); }
     else if (is(e, N.confirm)) applyListPick();
     e.preventDefault();
     return;
@@ -1314,13 +1317,13 @@ document.addEventListener('keydown', (e) => {
       else closeChat();                                                  // 5: close chat
       return;
     }
-    if (is(e, msgSel === -1 ? CH.browseMessages : N.up)) {
+    if (msgSel === -1 ? is(e, CH.browseMessages) : navUp(e)) {
       e.preventDefault();
       msgSel = msgSel === -1 ? msgs.length - 1 : Math.max(msgSel - 1, 0);
       renderPane(); renderBar();
       return;
     }
-    if (is(e, N.down)) {
+    if (is(e, N.down) || (msgSel >= 0 && navDown(e))) {
       e.preventDefault();
       if (msgSel === -1) return;
       msgSel = msgSel + 1 >= msgs.length ? -1 : msgSel + 1;
@@ -1363,16 +1366,16 @@ document.addEventListener('keydown', (e) => {
   }
 
   if (location_ === 'calls') {
-    if (is(e, N.down)) { e.preventDefault(); sel = Math.min(sel + 1, CALLS.length - 1); renderList(); }
-    else if (is(e, N.up)) { e.preventDefault(); sel = Math.max(sel - 1, 0); renderList(); }
+    if (navDown(e)) { e.preventDefault(); sel = Math.min(sel + 1, CALLS.length - 1); renderList(); }
+    else if (navUp(e)) { e.preventDefault(); sel = Math.max(sel - 1, 0); renderList(); }
     else if (is(e, N.confirm)) { e.preventDefault(); toast(`📞 calling <b>${CALLS[sel].name}</b>… (demo)`); }
     return;
   }
 
   if (drawerOpen) {
     if (!archived.length) { e.preventDefault(); return; }
-    if (is(e, N.down)) { e.preventDefault(); drawerSel = Math.min(drawerSel + 1, archived.length - 1); renderDrawer(); }
-    else if (is(e, N.up)) { e.preventDefault(); drawerSel = Math.max(drawerSel - 1, 0); renderDrawer(); }
+    if (navDown(e)) { e.preventDefault(); drawerSel = Math.min(drawerSel + 1, archived.length - 1); renderDrawer(); }
+    else if (navUp(e)) { e.preventDefault(); drawerSel = Math.max(drawerSel - 1, 0); renderDrawer(); }
     else if (is(e, C.open)) { e.preventDefault(); openChat(); }
     else if (is(e, C.archive)) { e.preventDefault(); archiveOrUnarchive(); }
     else if (is(e, C.markUnread)) { e.preventDefault(); markUnread(); }
@@ -1380,8 +1383,8 @@ document.addEventListener('keydown', (e) => {
   }
 
   const maxSel = visibleChats().length - 1 + (hasArchRow() ? 1 : 0);
-  if (is(e, N.down)) { e.preventDefault(); sel = Math.min(sel + 1, maxSel); renderList(); }
-  else if (is(e, N.up)) { e.preventDefault(); sel = Math.max(sel - 1, 0); renderList(); }
+  if (navDown(e)) { e.preventDefault(); sel = Math.min(sel + 1, maxSel); renderList(); }
+  else if (navUp(e)) { e.preventDefault(); sel = Math.max(sel - 1, 0); renderList(); }
   else if (is(e, C.open)) {
     e.preventDefault();
     if (hasArchRow() && sel === 0) openDrawer(); else openChat();

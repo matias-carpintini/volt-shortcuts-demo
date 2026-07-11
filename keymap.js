@@ -49,6 +49,8 @@ const KEYMAP = {
   nav: {
     up: 'ArrowUp',
     down: 'ArrowDown',
+    vimUp: 'k',           // aliases in letter-free zones only (lists, message browsing, pickers)
+    vimDown: 'j',         // never in inputs — typing always wins
     left: 'ArrowLeft',
     right: 'ArrowRight',
     confirm: 'Enter',
@@ -57,7 +59,7 @@ const KEYMAP = {
   // ---- chatlist (and archived drawer) ----
   chatlist: {
     open: 'Enter',        // open focused chat / archived drawer
-    archive: 'e',         // archive (inbox) / unarchive (drawer)
+    archive: 'e',         // archive (inbox) / unarchive (drawer) — Gmail/Superhuman muscle memory
     markUnread: 'u',      // toggle unread badge
     changeList: 'l',      // open list picker
   },
@@ -79,7 +81,7 @@ const KEYMAP = {
     react: 'r',
     pin: 'p',
     star: 's',
-    edit: 'e',            // own messages only (same letter as archive — different scope, no clash)
+    edit: 'e',            // own messages only — same letter as archive, different scope (Slack edits with E too)
     info: 'i',            // delivery / read receipts
     delete: ['Backspace', 'Delete'],
     // -- idea (experimental, may be removed) --
