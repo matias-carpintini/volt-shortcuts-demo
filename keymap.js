@@ -70,6 +70,7 @@ const KEYMAP = {
     sendAndArchive: { key: 'Enter', meta: true }, // ⌘ Enter — send (if drafted) and archive; empty composer just archives (product decision)
     details: ']',                             // toggle contact info (from a focused message — printable, so never while typing)
     browseMessages: 'ArrowUp',                // start navigating messages from composer
+    jumpToCompose: { key: 'ArrowDown', meta: true }, // ⌘ ↓ — from message browsing straight back to the composer
     searchMessages: { key: 'f', meta: true }, // ⌘ f — search within the open chat
   },
 

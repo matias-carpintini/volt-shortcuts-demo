@@ -595,6 +595,7 @@ function renderOverlays() {
       ]],
       ['Open chat', [
         [kbd(CH.browseMessages), 'Browse messages'],
+        [kbd(KEYMAP.chat.jumpToCompose), 'Jump back to composer'],
         [kbd(CH.send), 'Send'],
         [kbd(CH.sendAndArchive), 'Send + archive'],
         [kbd(CH.searchMessages), 'Search in chat'],
@@ -687,7 +688,7 @@ function renderBar() {
       <span>${kbd(M.forward)} fwd</span><span>${kbd(M.react)} react</span>
       <span>${kbd(M.pin)} pin</span><span>${kbd(M.star)} star</span>
       <span>${kbd(M.edit)} edit</span><span>${kbd(M.info)} info</span>
-      <span>${kbd(M.openAttachment)} open</span><span>${kbd(CH.details)} details</span><span>${kbd(M.delete)} del</span><span>${kbd(G.back)} back</span>`;
+      <span>${kbd(M.openAttachment)} open</span><span>${kbd(CH.jumpToCompose)} compose</span><span>${kbd(CH.details)} details</span><span>${kbd(M.delete)} del</span><span>${kbd(G.back)} back</span>`;
   } else if (view === 'chat') {
     $bar.innerHTML = `<span>${kbd(CH.browseMessages)} browse msgs</span><span>${kbd(CH.send)} send</span>
       <span>${kbd(CH.sendAndArchive)} send+archive</span>
@@ -1257,6 +1258,12 @@ document.addEventListener('keydown', (e) => {
   if (is(e, G.privacy)) { e.preventDefault(); togglePrivacy(); return; }
   if (is(e, CH.sendAndArchive) && view === 'chat' && !anyOverlay() && !csOpen && msgSel === -1) { e.preventDefault(); sendAndArchive(); return; }
   if (is(e, M.copy) && view === 'chat' && msgSel >= 0 && !anyOverlay()) { e.preventDefault(); copyMsg(); return; }
+  if (is(e, CH.jumpToCompose) && view === 'chat' && msgSel >= 0 && !anyOverlay()) {
+    e.preventDefault();
+    msgSel = -1;
+    renderPane(); renderBar();
+    return;
+  }
   if (is(e, CH.searchMessages) && view === 'chat' && !settingsOpen) { e.preventDefault(); openChatSearch(); return; }
   if (e.metaKey || e.ctrlKey || e.altKey) return;
 

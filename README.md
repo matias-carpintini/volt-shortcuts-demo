@@ -122,6 +122,7 @@ The composer is blurred here; every key acts on the highlighted bubble.
 | Key | Action |
 |---|---|
 | `↑` `↓` / `j` `k` | Older / newer (`↓`/`j` past the newest returns to the composer) |
+| `⌘ ↓` | Jump straight back to the composer |
 | `Enter` | Reply — quote chip in the composer |
 | `⌘ C` | Copy message text (Slack convention — no text selected, so it takes the focused message) |
 | `F` | Forward — WA modal: search, `Enter` multi-select, `⌘ Enter` send |
