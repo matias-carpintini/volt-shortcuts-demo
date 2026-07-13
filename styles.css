@@ -650,3 +650,15 @@ body.privacy .chat.archived-row .avatar, body.privacy .chat.archived-row .chat-n
 .lb-body { padding: 60px 20px; text-align: center; }
 .lb-body .msy { font-size: 90px; color: var(--text-dim); }
 .lb-cap { margin-top: 14px; font-size: 12.5px; color: var(--text-dim); }
+
+/* Video bubble + playing waveform */
+.video-ph { position: relative; }
+.video-ph .msy { font-size: 40px; color: var(--text); opacity: .85; }
+.video-ph .vdur {
+  position: absolute; bottom: 6px; right: 8px;
+  font-size: 10.5px; color: var(--text-dim);
+}
+.audio-msg .wave.playing {
+  background: repeating-linear-gradient(90deg, var(--accent) 0 2px, transparent 2px 5px);
+  opacity: .9;
+}

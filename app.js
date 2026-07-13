@@ -85,6 +85,7 @@ const MESSAGES = {
     { author: null, text: 'Salgo unos mins! 🏃', time: '12:39', out: true },
     { author: 'Miguel Morkin', text: '', image: true, time: '13:21', out: false },
     { author: null, text: '', audio: true, dur: '0:07', time: '13:22', out: true },
+    { author: 'Julian Caruso', text: '', video: true, dur: '0:32', time: '13:23', out: false },
   ],
 };
 
@@ -115,7 +116,9 @@ let csOpen = false, csQuery = '', csSel = 0;   // in-chat search drawer
 let editOpen = false, editIdx = -1;            // edit-message modal
 let delOpen = false, delIdx = -1;              // delete-confirmation dialog
 let helpOpen = false;
-let imgOpen = false;          // image lightbox (Space on an image message)
+let lbType = null;            // lightbox: null | 'image' | 'video'
+let vidPlaying = false;       // video lightbox playback state
+let playingIdx = -1;          // audio message currently "playing" inline
 let recording = false;        // ⌘⇧A voice-note recording
 let chipMode = null;        // null | 'reply'
 let chordLeader = null, chordTimer = null;
@@ -158,7 +161,7 @@ function visibleChats() {
 function hasArchRow() { return location_ === 'inbox' && filterMode === 'all'; }
 function isViewFilter() { return LISTS.some(l => l.name === filterMode); }
 function anyOverlay() {
-  return paletteOpen || lpOpen || !!createOpen || editOpen || delOpen || helpOpen || fwdOpen || viewsOpen || imgOpen;
+  return paletteOpen || lpOpen || !!createOpen || editOpen || delOpen || helpOpen || fwdOpen || viewsOpen || !!lbType;
 }
 
 // ---------------- Render: sidenav ----------------
@@ -333,7 +336,8 @@ function renderPane() {
             ${m.author ? `<div class="author">${m.author}</div>` : ''}
             ${m.quote ? `<div class="quote">${m.quote}</div>` : ''}
             ${m.image ? '<div class="img-ph"><span class="msy">image</span></div>' : ''}
-            ${m.audio ? `<div class="audio-msg"><span class="msy">play_circle</span><span class="wave"></span><span class="adur">${m.dur || '0:07'}</span></div>` : ''}
+            ${m.audio ? `<div class="audio-msg"><span class="msy">${playingIdx === i ? 'stop_circle' : 'play_circle'}</span><span class="wave ${playingIdx === i ? 'playing' : ''}"></span><span class="adur">${m.dur || '0:07'}</span></div>` : ''}
+            ${m.video ? `<div class="img-ph video-ph"><span class="msy">play_circle</span><span class="vdur">${m.dur || ''}</span></div>` : ''}
             ${m.text ? `<div class="body">${hl(m.text)}</div>` : ''}
             <div class="time">${m.forwarded ? '<span class="edited">forwarded</span> ' : ''}${m.edited ? '<span class="edited">edited</span> ' : ''}${m.time}${m.out ? ' <span class="msy ticks">done_all</span>' : ''}</div>
             ${m.reaction ? `<div class="reaction">${m.reaction}</div>` : ''}
@@ -513,11 +517,15 @@ function renderOverlays() {
     $views.querySelector('.m-item.selected')?.scrollIntoView({ block: 'nearest' });
   }
 
-  // image lightbox (Space on an image message)
-  $lightbox.classList.toggle('on', imgOpen);
-  if (imgOpen) {
+  // attachment lightbox (Space on an image/video message)
+  $lightbox.classList.toggle('on', !!lbType);
+  if (lbType === 'image') {
     $lightbox.innerHTML = `
       <div class="lb-body"><span class="msy">image</span><div class="lb-cap">Photo · Miguel Morkin · 13:21 (demo)</div></div>`;
+  } else if (lbType === 'video') {
+    $lightbox.innerHTML = `
+      <div class="lb-body"><span class="msy">${vidPlaying ? 'movie' : 'pause_circle'}</span>
+      <div class="lb-cap">${vidPlaying ? '▶ playing' : '⏸ stopped'} · Video · Julian Caruso · 0:32 (demo)</div></div>`;
   }
 
   // forward message (WA-style: search + multi-select checkboxes)
@@ -640,6 +648,12 @@ function renderOverlays() {
 // ---------------- Render: shortcut bar ----------------
 function renderBar() {
   const N = KEYMAP.nav, C = KEYMAP.chatlist, M = KEYMAP.message, CH = KEYMAP.chat, G = KEYMAP.global;
+  if (lbType) {
+    $bar.innerHTML = lbType === 'video'
+      ? `<span>${kbd(KEYMAP.message.openAttachment)} ${vidPlaying ? 'stop' : 'play'}</span><span>${kbd(G.back)} close</span>`
+      : `<span>${kbd(G.back)} close</span>`;
+    return;
+  }
   if (chordLeader) {
     const GO = KEYMAP.goto, CR = KEYMAP.create;
     if (chordLeader === keyOf(GO.leader))
@@ -724,6 +738,7 @@ function openChat(id) {
   msgSel = -1;
   detailsOpen = false; reactOpen = false; csOpen = false; infoOpen = false;
   editOpen = false; editIdx = -1; chipMode = null;
+  playingIdx = -1; lbType = null; vidPlaying = false;
   renderAll();
   const c = $('compose');
   if (c) c.value = '';
@@ -733,6 +748,7 @@ function closeChat() {
   openId = null;
   view = 'list';
   msgSel = -1;
+  playingIdx = -1; lbType = null; vidPlaying = false;
   detailsOpen = false; reactOpen = false; csOpen = false; infoOpen = false;
   editOpen = false; editIdx = -1; chipMode = null;
   renderAll();
@@ -1101,18 +1117,40 @@ function stopRecording(send) {
   if (m) m.scrollTop = m.scrollHeight;
 }
 
+// Space on the focused message — scope:
+//   audio: toggles play / stop inline (icon + waveform reflect state)
+//   image: opens the lightbox; only Esc closes it
+//   video: opens the lightbox playing; Space stops/resumes, Esc closes
 function openAttachment() {
   const m = msgsOf()[msgSel];
   if (!m) return;
-  if (m.image) { imgOpen = true; renderOverlays(); renderBar(); }
-  else if (m.audio) toastKey(KEYMAP.message.openAttachment, '▶ playing voice message… (demo)');
-  else toastKey(KEYMAP.message.openAttachment, 'no attachment on this message');
+  if (m.audio) {
+    playingIdx = playingIdx === msgSel ? -1 : msgSel;
+    toastKey(KEYMAP.message.openAttachment, playingIdx >= 0 ? '▶ playing voice message…' : '⏹ stopped');
+    renderPane();
+  } else if (m.image) {
+    lbType = 'image';
+    renderOverlays(); renderBar();
+  } else if (m.video) {
+    lbType = 'video';
+    vidPlaying = true; // autoplay
+    renderOverlays(); renderBar();
+  } else {
+    toastKey(KEYMAP.message.openAttachment, 'no attachment on this message');
+  }
+}
+function closeLightbox() {
+  lbType = null; vidPlaying = false;
+  renderOverlays(); renderBar();
 }
 
+// Product decision: ⌘Enter always archives the open conversation.
+// With a draft it sends first; with an empty composer it just archives —
+// so the same key closes out a chat whether or not you had something to say.
 function sendAndArchive() {
   const input = $('compose');
-  if (!input || !input.value.trim()) return;
-  sendMsg();
+  const hadText = !!(input && input.value.trim());
+  if (hadText) sendMsg();
   const chat = findChat(openId);
   if (!chat) return;
   if (chats.some(c => c.id === chat.id)) {
@@ -1122,7 +1160,7 @@ function sendAndArchive() {
   closeChat();
   sel = Math.min(sel, visibleChats().length - 1 + (hasArchRow() ? 1 : 0));
   renderAll();
-  toastKey(KEYMAP.chat.sendAndArchive, `sent & archived <b>${chat.name}</b>`);
+  toastKey(KEYMAP.chat.sendAndArchive, `${hadText ? 'sent & archived' : 'archived'} <b>${chat.name}</b>`);
 }
 
 // ----- Goto -----
@@ -1202,10 +1240,12 @@ document.addEventListener('keydown', (e) => {
     return; // typing lands in the search input
   }
 
-  // ---- image lightbox: any dismiss key closes ----
-  if (imgOpen) {
-    if (is(e, G.back) || is(e, N.confirm) || is(e, KEYMAP.message.openAttachment)) {
-      imgOpen = false; renderOverlays(); renderBar();
+  // ---- attachment lightbox: Esc closes; Space toggles video playback only ----
+  if (lbType) {
+    if (is(e, G.back)) closeLightbox();
+    else if (lbType === 'video' && is(e, KEYMAP.message.openAttachment)) {
+      vidPlaying = !vidPlaying;
+      renderOverlays(); renderBar();
     }
     e.preventDefault();
     return;
@@ -1265,6 +1305,12 @@ document.addEventListener('keydown', (e) => {
   }
 
   // ---- pending chord: resolve second key ----
+  if (lbType) {
+    $bar.innerHTML = lbType === 'video'
+      ? `<span>${kbd(KEYMAP.message.openAttachment)} ${vidPlaying ? 'stop' : 'play'}</span><span>${kbd(G.back)} close</span>`
+      : `<span>${kbd(G.back)} close</span>`;
+    return;
+  }
   if (chordLeader) {
     if (is(e, G.back)) { e.preventDefault(); clearChord(); return; } // cancel chord, swallow nothing
     const actions = chordActionsFor(chordLeader);

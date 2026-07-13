@@ -110,7 +110,7 @@ Chord leaders (`g`, `c`) fire from the chatlist or a focused message — never f
 |---|---|
 | *type* | Just type — nothing is intercepted |
 | `Enter` | Send |
-| `⌘ Enter` | Send **and archive** the conversation |
+| `⌘ Enter` | Send **and archive** — with an empty composer it just archives (product decision: one key closes out a chat either way) |
 | `↑` | Step out of the composer into message browsing |
 | `⌘ F` | Search in chat — right drawer, newest-first results, `↑` `↓` live-preview matches, `Enter` jumps to the message |
 | `Esc` | Drop quoted reply → close chat |
@@ -130,7 +130,7 @@ The composer is blurred here; every key acts on the highlighted bubble.
 | `E` | Edit (own messages) — modal, `⌘ Enter` saves |
 | `I` | Message info — right drawer, pinned to the message you opened it for |
 | `]` | Contact info drawer |
-| `Space` | Play voice note / open image lightbox *(idea)* |
+| `Space` | Attachment action *(idea)*: audio play/stop · image opens (Esc closes) · video opens autoplaying, `Space` stops/resumes |
 | `⌫` | Delete — confirmation dialog, `⌘ Enter` confirms |
 
 ### Dialogs & pickers

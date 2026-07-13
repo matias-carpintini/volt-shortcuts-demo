@@ -67,7 +67,7 @@ const KEYMAP = {
   // ---- open chat, composing ----
   chat: {
     send: 'Enter',
-    sendAndArchive: { key: 'Enter', meta: true }, // ⌘ Enter — send and archive the conversation
+    sendAndArchive: { key: 'Enter', meta: true }, // ⌘ Enter — send (if drafted) and archive; empty composer just archives (product decision)
     details: ']',                             // toggle contact info (from a focused message — printable, so never while typing)
     browseMessages: 'ArrowUp',                // start navigating messages from composer
     searchMessages: { key: 'f', meta: true }, // ⌘ f — search within the open chat
@@ -85,7 +85,11 @@ const KEYMAP = {
     info: 'i',            // delivery / read receipts
     delete: ['Backspace', 'Delete'],
     // -- idea (experimental, may be removed) --
-    openAttachment: ' ',  // idea: Space — play audio message / open image
+    // Space — attachment action on the focused message. Scope:
+    //   audio: play / stop (Space toggles)
+    //   image: open lightbox; Esc closes (Space does NOT close)
+    //   video: open + autoplay; Space stops/resumes, Esc closes
+    openAttachment: ' ',
   },
 
 };
